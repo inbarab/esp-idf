@@ -143,3 +143,15 @@ BYTE ff_diskio_get_pdrv_card(const sdmmc_card_t* card)
     }
     return 0xff;
 }
+
+void ff_diskio_unregister_sdmmc(sdmmc_card_t* card)
+{
+    int pdrv = ff_diskio_get_pdrv_card(card);
+
+    if (pdrv < FF_VOLUMES) {
+        s_cards[pdrv] = NULL;
+    }
+
+    ff_diskio_unregister(pdrv);
+}
+
