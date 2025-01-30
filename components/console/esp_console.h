@@ -68,7 +68,7 @@ typedef struct {
         .max_cmdline_length = 0,          \
 }
 
-#if CONFIG_ESP_CONSOLE_UART_DEFAULT || CONFIG_ESP_CONSOLE_UART_CUSTOM
+#if CONFIG_ESP_CONSOLE_UART_DEFAULT || CONFIG_ESP_CONSOLE_UART_CUSTOM || ESP_CONSOLE_SECONDARY_UART0
 /**
  * @brief Parameters for console device: UART
  *
@@ -80,7 +80,7 @@ typedef struct {
     int rx_gpio_num; //!< GPIO number for RX path, -1 means using default one
 } esp_console_dev_uart_config_t;
 
-#if CONFIG_ESP_CONSOLE_UART_CUSTOM
+#if CONFIG_ESP_CONSOLE_UART_CUSTOM || ESP_CONSOLE_SECONDARY_UART0
 #define ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT()       \
 {                                                   \
     .channel = CONFIG_ESP_CONSOLE_UART_NUM,         \

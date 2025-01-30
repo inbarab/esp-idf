@@ -8,7 +8,8 @@ list(APPEND sources "vfs.c"
                     "vfs_eventfd.c"
                     "vfs_uart.c"
                     "vfs_semihost.c"
-                    "vfs_console.c")
+                    "vfs_console.c"
+                    "vfs_cdcacm.c")
 
 list(APPEND pr driver
                esp_timer)

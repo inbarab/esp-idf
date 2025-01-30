@@ -43,6 +43,9 @@ const static char *primary_path = "/dev/cdcacm";
 #if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
 const static char *secondary_path = "/dev/secondary";
 static int secondary_vfs_index;
+#elif CONFIG_ESP_CONSOLE_SECONDARY_UART0 
+const static char *secondary_path = "/dev/uart";
+static int secondary_vfs_index;
 #endif // Secondary part
 
 static int primary_vfs_index;
@@ -63,6 +66,8 @@ int console_open(const char * path, int flags, int mode)
 // Secondary port open
 #if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
     vfs_console.fd_secondary = get_vfs_for_path(secondary_path)->vfs.open("/", flags, mode);
+#elif CONFIG_ESP_CONSOLE_SECONDARY_UART0 
+    vfs_console.fd_secondary = get_vfs_for_path(secondary_path)->vfs.open("/"STRINGIFY(CONFIG_ESP_CONSOLE_UART_NUM), flags, mode);
 #endif
     return 0;
 }
@@ -71,7 +76,7 @@ ssize_t console_write(int fd, const void *data, size_t size)
 {
     // All function calls are to primary, except from write and close, which will be forwarded to both primary and secondary.
     get_vfs_for_index(primary_vfs_index)->vfs.write(vfs_console.fd_primary, data, size);
-#if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
+#if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG || CONFIG_ESP_CONSOLE_SECONDARY_UART0
     get_vfs_for_index(secondary_vfs_index)->vfs.write(vfs_console.fd_secondary, data, size);
 #endif
     return size;
@@ -86,7 +91,7 @@ int console_close(int fd)
 {
     // All function calls are to primary, except from write and close, which will be forwarded to both primary and secondary.
     get_vfs_for_index(primary_vfs_index)->vfs.close(vfs_console.fd_primary);
-#if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
+#if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG || CONFIG_ESP_CONSOLE_SECONDARY_UART0
     get_vfs_for_index(secondary_vfs_index)->vfs.close(vfs_console.fd_secondary);
 #endif
     return 0;
@@ -105,7 +110,7 @@ int console_fcntl(int fd, int cmd, int arg)
 int console_fsync(int fd)
 {
     const int ret_val = get_vfs_for_index(primary_vfs_index)->vfs.fsync(vfs_console.fd_primary);
-#if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
+#if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG || CONFIG_ESP_CONSOLE_SECONDARY_UART0
     (void)get_vfs_for_index(secondary_vfs_index)->vfs.fsync(vfs_console.fd_secondary);
 #endif
     return ret_val;
@@ -221,6 +226,12 @@ esp_err_t esp_vfs_console_register(void)
 #if CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG
     const esp_vfs_t *usb_serial_jtag_vfs = esp_vfs_usb_serial_jtag_get_vfs();
     err = esp_vfs_register_common(secondary_path, strlen(secondary_path), usb_serial_jtag_vfs, NULL, &secondary_vfs_index);
+    if(err != ESP_OK) {
+        return err;
+    }
+#elif CONFIG_ESP_CONSOLE_SECONDARY_UART0
+    const esp_vfs_t *uart_vfs = esp_vfs_uart_get_vfs();
+    err = esp_vfs_register_common(secondary_path, strlen(secondary_path), uart_vfs, NULL, &secondary_vfs_index);
     if(err != ESP_OK) {
         return err;
     }

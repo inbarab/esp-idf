@@ -263,6 +263,14 @@ menu "ESP System Settings"
                 The output currently only supports non-blocking mode without using the console.
                 If you want to output in blocking mode with REPL or input through USB_SERIAL_JTAG port,
                 please change the primary config to ESP_CONSOLE_USB_SERIAL_JTAG above.
+        config ESP_CONSOLE_SECONDARY_UART0
+            bool "Default: UART0"
+            depends on !ESP_CONSOLE_UART_DEFAULT
+            help
+                This option supports output through UART0 port when the UART0 is not the primary console.
+                The output currently only supports non-blocking mode without using the console.
+                If you want to output in blocking mode with REPL or input through UART0 port,
+                please change the primary config to ESP_CONSOLE_UART_DEFAULT above.
     endchoice
 
     config ESP_CONSOLE_USB_SERIAL_JTAG_ENABLED
@@ -296,7 +304,7 @@ menu "ESP System Settings"
 
     config ESP_CONSOLE_UART_NUM
         int
-        default 0 if ESP_CONSOLE_UART_DEFAULT
+        default 0 if ESP_CONSOLE_UART_DEFAULT || ESP_CONSOLE_SECONDARY_UART0
         default 0 if ESP_CONSOLE_UART_CUSTOM_NUM_0
         default 1 if ESP_CONSOLE_UART_CUSTOM_NUM_1
         default 0 if ESP_CONSOLE_NONE
@@ -346,7 +354,7 @@ menu "ESP System Settings"
     config ESP_CONSOLE_UART_BAUDRATE
         int
         prompt "UART console baud rate" if ESP_CONSOLE_UART_CUSTOM
-        depends on ESP_CONSOLE_UART
+        depends on ESP_CONSOLE_UART || ESP_CONSOLE_SECONDARY_UART0
         default 74880 if (IDF_TARGET_ESP32C2 && XTAL_FREQ_26)
         default 115200
         range 1200 4000000 if !PM_ENABLE
