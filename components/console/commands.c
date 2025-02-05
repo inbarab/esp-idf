@@ -174,7 +174,14 @@ static const cmd_item_t *find_command_by_name(const char *name)
     return cmd;
 }
 
+
 esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
+{
+    return esp_console_run_restricted(0xFF, cmdline, cmd_ret);
+}
+
+
+esp_err_t esp_console_run_restricted(uint32_t al, const char *cmdline, int *cmd_ret)
 {
     esp_err_t ret = ESP_OK;
 

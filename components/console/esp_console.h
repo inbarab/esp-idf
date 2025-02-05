@@ -391,6 +391,15 @@ esp_err_t esp_console_new_repl_usb_serial_jtag(const esp_console_dev_usb_serial_
  */
 esp_err_t esp_console_start_repl(esp_console_repl_t *repl);
 
+/**
+ * @brief Set repl prompt
+ * @param[in] repl REPL handle returned from esp_console_new_repl_xxx
+ * @return
+ *      - ESP_OK on success
+ *      - ESP_ERR_XXX otherwise
+ */
+esp_err_t esp_console_set_prompt(esp_console_repl_t *repl, const char *prompt);
+
 #ifdef __cplusplus
 }
 #endif

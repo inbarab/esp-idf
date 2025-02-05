@@ -352,6 +352,29 @@ static esp_err_t esp_console_setup_prompt(const char *prompt, esp_console_repl_c
 
     return ESP_OK;
 }
+
+esp_err_t esp_console_set_prompt(esp_console_repl_t *repl, const char *prompt)
+{
+    esp_console_repl_com_t *repl_com = __containerof(repl, esp_console_repl_com_t, repl_core);
+
+    /* set command line prompt */
+    const char *prompt_temp = "esp>";
+    if (prompt) {
+        prompt_temp = prompt;
+    }
+
+    /* set command line prompt */
+    if (linenoiseIsDumbMode()) {
+        snprintf(repl_com->prompt, CONSOLE_PROMPT_MAX_LEN - 1, 
+                "%s ", prompt_temp);
+    } else {
+        snprintf(repl_com->prompt, CONSOLE_PROMPT_MAX_LEN - 1, 
+                LOG_COLOR_I "%s " LOG_RESET_COLOR, prompt_temp);
+    }
+    
+    return ESP_OK;
+}
+
 #endif // !CONFIG_ESP_CONSOLE_NONE
 
 #if !CONFIG_ESP_CONSOLE_NONE
