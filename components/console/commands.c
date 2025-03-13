@@ -49,9 +49,6 @@ static esp_console_config_t s_config = {
     .heap_alloc_caps = MALLOC_CAP_DEFAULT
 };
 
-/** temporary buffer used for command line parsing */
-static char *s_tmp_line_buf;
-
 static const cmd_item_t *find_command_by_name(const char *name);
 
 static esp_console_help_verbose_level_e s_verbose_level = ESP_CONSOLE_HELP_VERBOSE_LEVEL_1;
@@ -61,9 +58,6 @@ esp_err_t esp_console_init(const esp_console_config_t *config)
     if (!config) {
         return ESP_ERR_INVALID_ARG;
     }
-    if (s_tmp_line_buf) {
-        return ESP_ERR_INVALID_STATE;
-    }
     memcpy(&s_config, config, sizeof(s_config));
     if (s_config.hint_color == 0) {
         s_config.hint_color = ANSI_COLOR_DEFAULT;
@@ -71,20 +65,12 @@ esp_err_t esp_console_init(const esp_console_config_t *config)
     if (s_config.heap_alloc_caps == 0) {
         s_config.heap_alloc_caps = MALLOC_CAP_DEFAULT;
     }
-    s_tmp_line_buf = heap_caps_calloc(1, config->max_cmdline_length, s_config.heap_alloc_caps);
-    if (s_tmp_line_buf == NULL) {
-        return ESP_ERR_NO_MEM;
-    }
+
     return ESP_OK;
 }
 
 esp_err_t esp_console_deinit(void)
 {
-    if (!s_tmp_line_buf) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    free(s_tmp_line_buf);
-    s_tmp_line_buf = NULL;
     cmd_item_t *it, *tmp;
     SLIST_FOREACH_SAFE(it, &s_cmd_list, next, tmp) {
         SLIST_REMOVE(&s_cmd_list, it, cmd_item_, next);
@@ -233,20 +219,26 @@ static const cmd_item_t *find_command_by_name(const char *name)
 
 esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
 {
-    if (s_tmp_line_buf == NULL) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    char **argv = (char **) heap_caps_calloc(s_config.max_cmdline_args, sizeof(char *), s_config.heap_alloc_caps);
-    if (argv == NULL) {
+    esp_err_t ret = ESP_OK;
+
+    char *tmp_line_buf = (char *)heap_caps_calloc(1, s_config.max_cmdline_length, s_config.heap_alloc_caps);
+    if (tmp_line_buf == NULL) {
         return ESP_ERR_NO_MEM;
     }
-    strlcpy(s_tmp_line_buf, cmdline, s_config.max_cmdline_length);
+    char **argv = (char **) heap_caps_calloc(s_config.max_cmdline_args,
+            sizeof(char *), s_config.heap_alloc_caps);
+    if (argv == NULL) {
+        free(tmp_line_buf);
+        return ESP_ERR_NO_MEM;
+    }
 
-    size_t argc = esp_console_split_argv(s_tmp_line_buf, argv,
+    strlcpy(tmp_line_buf, cmdline, s_config.max_cmdline_length);
+
+    size_t argc = esp_console_split_argv(tmp_line_buf, argv,
                                          s_config.max_cmdline_args);
     if (argc == 0) {
-        free(argv);
-        return ESP_ERR_INVALID_ARG;
+        ret = ESP_ERR_INVALID_ARG;
+        goto esp_console_run_end;
     }
     const cmd_item_t *cmd = find_command_by_name(argv[0]);
     if (cmd == NULL) {
@@ -260,7 +252,8 @@ esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
         *cmd_ret = (*cmd->func_w_context)(cmd->context, argc, argv);
     }
     free(argv);
-    return ESP_OK;
+    free(tmp_line_buf);
+    return ret;
 }
 
 static struct {
@@ -373,7 +366,7 @@ esp_err_t esp_console_register_help_command(void)
         .help = "Print the summary of all registered commands if no arguments "
         "are given, otherwise print summary of given command.",
         .func = &help_command,
-        .argtable = &help_args
+        .argtable = &help_args,
     };
     return esp_console_cmd_register(&command);
 }
