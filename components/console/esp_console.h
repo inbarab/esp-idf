@@ -212,6 +212,7 @@ esp_err_t esp_console_cmd_register(const esp_console_cmd_t *cmd);
  *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
  */
 esp_err_t esp_console_run(const char *cmdline, int *cmd_ret);
+esp_err_t esp_console_run_restricted(uint32_t al, const char *cmdline, int *cmd_ret);
 
 /**
  * @brief Split command line into arguments in place
@@ -399,6 +400,7 @@ esp_err_t esp_console_start_repl(esp_console_repl_t *repl);
  *      - ESP_ERR_XXX otherwise
  */
 esp_err_t esp_console_set_prompt(esp_console_repl_t *repl, const char *prompt);
+
 
 #ifdef __cplusplus
 }
