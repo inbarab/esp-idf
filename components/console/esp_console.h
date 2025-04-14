@@ -80,7 +80,7 @@ typedef struct {
     int rx_gpio_num; //!< GPIO number for RX path, -1 means using default one
 } esp_console_dev_uart_config_t;
 
-#if CONFIG_ESP_CONSOLE_UART_CUSTOM || ESP_CONSOLE_SECONDARY_UART0
+#if CONFIG_ESP_CONSOLE_UART_CUSTOM 
 #define ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT()       \
 {                                                   \
     .channel = CONFIG_ESP_CONSOLE_UART_NUM,         \
@@ -155,6 +155,8 @@ esp_err_t esp_console_deinit(void);
  * @return console command return code, 0 indicates "success"
  */
 typedef int (*esp_console_cmd_func_t)(int argc, char **argv);
+typedef int (*esp_console_cmd_func_ex_t)(int argc, char **argv, void* ext);
+
 
 /**
  * @brief Console command description
@@ -181,6 +183,7 @@ typedef struct {
      * Pointer to a function which implements the command.
      */
     esp_console_cmd_func_t func;
+    esp_console_cmd_func_ex_t func_e;
     /**
      * Array or structure of pointers to arg_xxx structures, may be NULL.
      * Used to generate hint text if 'hint' is set to NULL.
@@ -212,7 +215,7 @@ esp_err_t esp_console_cmd_register(const esp_console_cmd_t *cmd);
  *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
  */
 esp_err_t esp_console_run(const char *cmdline, int *cmd_ret);
-esp_err_t esp_console_run_restricted(uint32_t al, const char *cmdline, int *cmd_ret);
+esp_err_t esp_console_run_e(const char *cmdline, int *cmd_ret, void* ext);
 
 /**
  * @brief Split command line into arguments in place

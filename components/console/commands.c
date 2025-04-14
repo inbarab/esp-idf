@@ -33,6 +33,7 @@ typedef struct cmd_item_ {
      */
     char *hint;
     esp_console_cmd_func_t func;    //!< pointer to the command handler
+    esp_console_cmd_func_ex_t func_e;
     void *argtable;                 //!< optional pointer to arg table
     SLIST_ENTRY(cmd_item_) next;    //!< next command in the list
 } cmd_item_t;
@@ -116,6 +117,7 @@ esp_err_t esp_console_cmd_register(const esp_console_cmd_t *cmd)
     }
     item->argtable = cmd->argtable;
     item->func = cmd->func;
+    item->func_e = cmd->func_e;
     cmd_item_t *last = SLIST_FIRST(&s_cmd_list);
     if (last == NULL) {
         SLIST_INSERT_HEAD(&s_cmd_list, item, next);
@@ -175,13 +177,7 @@ static const cmd_item_t *find_command_by_name(const char *name)
 }
 
 
-esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
-{
-    return esp_console_run_restricted(0xFF, cmdline, cmd_ret);
-}
-
-
-esp_err_t esp_console_run_restricted(uint32_t al, const char *cmdline, int *cmd_ret)
+esp_err_t esp_console_run_e(const char *cmdline, int *cmd_ret, void* ext)
 {
     esp_err_t ret = ESP_OK;
 
@@ -209,11 +205,25 @@ esp_err_t esp_console_run_restricted(uint32_t al, const char *cmdline, int *cmd_
         ret = ESP_ERR_NOT_FOUND;
         goto esp_console_run_end;
     }
-    *cmd_ret = (*cmd->func)(argc, argv);
+
+    if (cmd->func_e) {
+        printf("%s ext %d", cmdline, (int)ext);
+        *cmd_ret = (*cmd->func_e)(argc, argv, ext);
+    } else {
+    
+        printf("%s not ext", cmdline);
+        *cmd_ret = (*cmd->func)(argc, argv);
+    }
+    
 esp_console_run_end:
     free(argv);
     free(tmp_line_buf);
     return ret;
+}
+
+esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
+{
+    return esp_console_run_e(cmdline, cmd_ret, 0);
 }
 
 static struct {
