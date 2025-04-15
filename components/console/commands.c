@@ -207,11 +207,8 @@ esp_err_t esp_console_run_e(const char *cmdline, int *cmd_ret, void* ext)
     }
 
     if (cmd->func_e) {
-        printf("%s ext %d", cmdline, (int)ext);
         *cmd_ret = (*cmd->func_e)(argc, argv, ext);
     } else {
-    
-        printf("%s not ext", cmdline);
         *cmd_ret = (*cmd->func)(argc, argv);
     }
     
@@ -249,6 +246,12 @@ static void print_arg_help(cmd_item_t *it)
          arg_print_glossary(stdout, (void **) it->argtable, "  %12s  %s\n");
      }
      printf("\n");
+}
+
+
+void esp_console_print_arg_help(esp_console_cmd_t *it)
+{
+    print_arg_help((cmd_item_t *)it);
 }
 
 static int help_command(int argc, char **argv)
@@ -311,3 +314,13 @@ esp_err_t esp_console_register_help_command(void)
     };
     return esp_console_cmd_register(&command);
 }
+
+esp_console_cmd_t *esp_console_get_next_command(esp_console_cmd_t *cmd)
+{
+    if (cmd == NULL) {
+        return (esp_console_cmd_t *)(SLIST_FIRST(&s_cmd_list));
+    }
+
+    return (esp_console_cmd_t *)(SLIST_NEXT((cmd_item_t *)(cmd), next));
+}
+

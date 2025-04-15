@@ -289,6 +289,9 @@ const char *esp_console_get_hint(const char *buf, int *color, int *bold);
  */
 esp_err_t esp_console_register_help_command(void);
 
+esp_console_cmd_t *esp_console_get_next_command(esp_console_cmd_t *cmd);
+void esp_console_print_arg_help(esp_console_cmd_t *it);
+
 /******************************************************************************
  *              Console REPL
  ******************************************************************************/
