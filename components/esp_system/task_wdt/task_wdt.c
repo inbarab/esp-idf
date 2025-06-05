@@ -826,6 +826,29 @@ esp_err_t esp_task_wdt_print_triggered_tasks(task_wdt_msg_handler msg_handler, v
                 msg_handler(opaque, cpu);
             }
         }
+     else {
+            const char *cpu;
+            const char *name = entry->task_handle ? pcTaskGetName(entry->task_handle) : entry->user_name;
+            const UBaseType_t affinity = get_task_affinity(entry->task_handle);
+            if (cpus_fail) {
+                *cpus_fail |= affinity;
+            }
+            if (affinity == BIT(0)) {
+                cpu = " (CPU 0)";
+            } else if (affinity == BIT(1)) {
+                cpu = " (CPU 1)";
+            } else {
+                cpu = " (CPU 0/1)";
+            }
+            if (msg_handler == NULL) {
+                ESP_EARLY_LOGE(TAG, " - %s%s OK", name, cpu);
+            } else {
+                msg_handler(opaque, "\n - OK ");
+                msg_handler(opaque, name);
+                msg_handler(opaque, cpu);
+            }
+        }
+
     }
     return ESP_OK;
 }

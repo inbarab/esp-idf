@@ -153,7 +153,7 @@ static int tasks_info(int argc, char **argv)
         ESP_LOGE(TAG, "failed to allocate buffer for vTaskList output");
         return 1;
     }
-    fputs("Task Name\tStatus\tPrio\tHWM\tTask#", stdout);
+    fputs("Task Name\tStatus\tMutex\tPrio\tHWM\tTask#", stdout);
 #ifdef CONFIG_FREERTOS_VTASKLIST_INCLUDE_COREID
     fputs("\tAffinity", stdout);
 #endif

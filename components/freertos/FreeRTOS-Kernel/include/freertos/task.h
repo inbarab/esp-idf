@@ -179,6 +179,7 @@ typedef struct xTASK_STATUS
     #if ( configTASKLIST_INCLUDE_COREID == 1 )
         BaseType_t xCoreID;                       /**< Core this task is pinned to (0, 1, or tskNO_AFFINITY). If configNUMBER_OF_CORES == 1, this will always be 0. */
     #endif
+    UBaseType_t uxMutexesHeld;
 } TaskStatus_t;
 
 /** Possible return values for eTaskConfirmSleepModeStatus(). */
