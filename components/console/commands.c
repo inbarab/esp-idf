@@ -237,12 +237,14 @@ esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
     size_t argc = esp_console_split_argv(tmp_line_buf, argv,
                                          s_config.max_cmdline_args);
     if (argc == 0) {
-        ret = ESP_ERR_INVALID_ARG;
-        goto esp_console_run_end;
+        free(argv);
+        free(tmp_line_buf);
+        return ESP_ERR_INVALID_ARG;
     }
     const cmd_item_t *cmd = find_command_by_name(argv[0]);
     if (cmd == NULL) {
         free(argv);
+        free(tmp_line_buf);
         return ESP_ERR_NOT_FOUND;
     }
     if (cmd->func) {
