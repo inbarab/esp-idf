@@ -36,6 +36,7 @@ typedef struct cmd_item_ {
     esp_console_cmd_func_with_context_t func_w_context; //!< pointer to the command handler (with user context)
     void *argtable;                                     //!< optional pointer to arg table
     void *context;                                      //!< optional pointer to user context
+    void *app_specific;
     SLIST_ENTRY(cmd_item_) next;                        //!< next command in the list
 } cmd_item_t;
 
@@ -52,6 +53,8 @@ static esp_console_config_t s_config = {
 static const cmd_item_t *find_command_by_name(const char *name);
 
 static esp_console_help_verbose_level_e s_verbose_level = ESP_CONSOLE_HELP_VERBOSE_LEVEL_1;
+
+static bool (*cnsl_app_func)(void *arg) = NULL;
 
 esp_err_t esp_console_init(const esp_console_config_t *config)
 {
@@ -145,6 +148,8 @@ esp_err_t esp_console_cmd_register(const esp_console_cmd_t *cmd)
         item->func_w_context = cmd->func_w_context;
         item->context = cmd->context;
     }
+
+    item->app_specific = cmd->app_specific;
 
     cmd_item_t *last;
     cmd_item_t *it;
@@ -247,12 +252,23 @@ esp_err_t esp_console_run(const char *cmdline, int *cmd_ret)
         free(tmp_line_buf);
         return ESP_ERR_NOT_FOUND;
     }
+
+    if (cnsl_app_func != NULL) {
+        if (!cnsl_app_func(cmd->app_specific)) {
+            free(argv);
+            free(tmp_line_buf);
+            return ESP_ERR_NOT_FOUND;
+        }
+    }
+
     if (cmd->func) {
         *cmd_ret = (*cmd->func)(argc, argv);
     }
+
     if (cmd->func_w_context) {
         *cmd_ret = (*cmd->func_w_context)(cmd->context, argc, argv);
     }
+
     free(argv);
     free(tmp_line_buf);
     return ret;
@@ -325,6 +341,12 @@ static int help_command(int argc, char **argv)
 
         /* Print info of each command based on verbose level */
         SLIST_FOREACH(it, &s_cmd_list, next) {
+            if (cnsl_app_func != NULL) {
+                if (!cnsl_app_func(it->app_specific)) {
+                    continue;
+                }
+            }
+
             if (it->help == NULL) {
                 continue;
             }
@@ -339,6 +361,12 @@ static int help_command(int argc, char **argv)
                 continue;
             }
             if (strcmp(help_args.help_cmd->sval[0], it->command) == 0) {
+                if (cnsl_app_func != NULL) {
+                    if (!cnsl_app_func(it->app_specific)) {
+                        break;
+                    }
+                }
+
                 print_arg_help(it);
                 found_command = true;
                 ret_value = 0;
@@ -381,3 +409,16 @@ esp_err_t esp_console_set_help_verbose_level(esp_console_help_verbose_level_e ve
     s_verbose_level = verbose_level;
     return ESP_OK;
 }
+
+esp_err_t esp_console_register_app_func(bool (*af)(void *))
+{
+    cnsl_app_func = af;
+    return ESP_OK;
+}
+
+esp_err_t esp_console_deregister_app_func(void)
+{
+    cnsl_app_func = NULL;
+    return ESP_OK;
+}
+

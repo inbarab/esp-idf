@@ -218,6 +218,11 @@ typedef struct {
      * This is used if context aware function \c func_w_context is set.
      */
     void *context;
+    /**
+     * Application specific data that is not context and not args
+     */
+    void *app_specific;
+
 } esp_console_cmd_t;
 
 /**
@@ -342,6 +347,20 @@ esp_err_t esp_console_register_help_command(void);
  *      - ESP_ERR_INVALID_ARG, if invalid verbose level is provided
  */
 esp_err_t esp_console_set_help_verbose_level(esp_console_help_verbose_level_e verbose_level);
+
+/**
+ * @brief Register a hook function for checking before running a cnsl cmd
+ *
+ * If the function returns true the command will run
+ * If the function returns false the command is skipped
+ *
+ * @return
+ *      - ESP_OK on success
+ */
+esp_err_t esp_console_register_app_func(bool (*af)(void *));
+esp_err_t esp_console_deregister_app_func(void);
+
+
 
 /******************************************************************************
  *              Console REPL
